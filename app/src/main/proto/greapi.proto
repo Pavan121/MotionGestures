@@ -1,0 +1,41 @@
+syntax = "proto3";
+package GREProtocol;
+//
+// Recognition flow:
+// 1) Start listening for acceleration data from the accelerometer
+// 2) Create an ID for the session (UUID is recommended)
+// 3) Store each x,y,z values into an Acceleration object. 
+// 4) Store each Acceleration object into a list
+// 5) Whenever you decide to send the data to the server for analysis construct the AccelerationMessage object
+//    by passing it the list of the collected accelerations and the generated id.
+// 6) Read the response of the server into the RecognitionResponse object
+// 7) If the status of the response equals 'GestureEnd' then the gesture has been recognized and the label property will hold the recognized gesture's label
+
+message AccelerationMessage {
+    string id = 1; //the ID of this recognition session. You can use the same ID for one or more recognitions
+    repeated Acceleration accelerations = 2; //the set of collected acceleration data which are sent to the server for analysis
+    bool endOfGesture = 3; //set this to true if you are sure that no more acceleration data will be collected this session. If unsure, leave it false.
+}
+
+message Acceleration {
+	float x = 1; //the X value of the acceleration in SI units (m/s^2)
+	float y = 2; //the Y value of the acceleration in SI units (m/s^2) 
+	float z = 3; //the Z value of the acceleration in SI units (m/s^2) 
+	int32 index = 4; //the index of this acceleration for the entire session. 
+}
+
+enum Status {
+ NoGesture = 0;
+ GestureStart = 1; //the recognition engine detected the start of a gesture
+ GestureEnd = 2;  // the recognition engine detected the end of a gesture
+ GestureTooShort = 3;
+ GestureTooLong = 4;
+}
+
+message RecognitionResponse {
+	float confidence = 1; //the confidence in the result. Only valid when status is GestureEnd. Probability is obtained by: probability = e^confidence (where e is Euler's number)
+	int32 label = 2; //the label (identifier) of the recognized gesture. Only valid when status is GestureEnd
+	int32 length = 3; //the number of accelerations the gesture is comprised of. Only valid when status is GestureEnd
+	Status status = 4; //the status of the recognition
+	string name = 5; //the name of the recognized gesture, if available. Only valid when status is GestureEnd.
+}
